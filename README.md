@@ -1,8 +1,10 @@
 # phpwd
 
+[![MIT License](https://img.shields.io/github/license/hgsgtk/phpwd)](https://github.com/hgsgtk/phpwd/blob/main/LICENSE)
+
 ## Description
 
-The phpwd library is PHP language binding for Selenium WebDriver client.
+The phpwd library is Selenium WebDriver client in PHP.
 
 ## Installation
 
@@ -14,14 +16,14 @@ composer require hgsgtk/phpwd
 
 ## Getting started
 
+## Development
+
 To control a browser, you need to start a remote end (server), which will listen to the commands sent from this library.
 By using the included docker-compose.yml, chrome driver can be used immediately.
 
 ```
 make set-local
 ```
-
-## Development
 
 ### Run Test
 
