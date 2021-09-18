@@ -9,5 +9,23 @@
             "email": "hgsgtk@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Phpwd\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Phpwd\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
+    },
+    "scripts": {
+        "tests": "phpunit tests"
+    }
 }
