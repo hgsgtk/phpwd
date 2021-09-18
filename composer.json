@@ -1,0 +1,13 @@
+{
+    "name": "hgsgtk/phpwd",
+    "description": "Webdriver client for PHP",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "hgsgtk",
+            "email": "hgsgtk@gmail.com"
+        }
+    ],
+    "require": {}
+}

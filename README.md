@@ -1,2 +1,2 @@
-# php-mywebdriver
+# phpwd
 PHP WebDriver client
