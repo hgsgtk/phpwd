@@ -11,7 +11,7 @@
     ],
     "require": {
         "php": ">=8.0",
-        "ext-curl": "^7.3",
+        "ext-curl": "*",
         "ext-zip": "*"
     },
     "autoload": {
