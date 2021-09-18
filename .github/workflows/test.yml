@@ -1,0 +1,17 @@
+on: [pull_request]
+name: Integration and Unit tests by PhpUnit
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP with PECL extension
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          extensions: curl, zip
+
+      - name: install composer dependencies
+        run: composer install
+
+      - name: Run integration and unit tests
+        run: composer run-script tests
