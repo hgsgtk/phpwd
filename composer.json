@@ -1,6 +1,12 @@
 {
     "name": "hgsgtk/phpwd",
     "description": "Webdriver client for PHP",
+    "keywords": [
+        "webdriver",
+        "selenium",
+        "php",
+        "chromedriver"
+    ],
     "type": "library",
     "license": "MIT",
     "authors": [
