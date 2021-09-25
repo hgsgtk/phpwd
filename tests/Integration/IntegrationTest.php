@@ -12,6 +12,8 @@ final class IntegrationTest extends TestCase
 {
     public function testGoToExampleCom(): void
     {
+        $this->markTestSkipped('This test case is passed only in local environment which run chromedriver');
+
         $driver = new Webdriver();
 
         try {
@@ -48,7 +50,5 @@ final class IntegrationTest extends TestCase
         } finally {
             $driver->closeBrowser();
         }
-
-        $this->assertTrue(true, "initialize project");
     }
 }
