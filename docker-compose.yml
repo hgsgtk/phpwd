@@ -5,6 +5,8 @@ services:
     build: .
     volumes:
       - .:/tmp
+    depends_on:
+      - selenium-chrome
 
   selenium-chrome:
     image: selenium/standalone-chrome-debug:3
