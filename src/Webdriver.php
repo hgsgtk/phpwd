@@ -74,7 +74,7 @@ final class Webdriver
         $this->sendDelete('/session/' . $this->sessionId);
     }
 
-    public function goto(string $url): void
+    public function navigateTo(string $url): void
     {
         if (!$this->sessionId) {
             throw new LogicException('you need to start a session by openBrowser()');
@@ -123,17 +123,51 @@ final class Webdriver
     /**
      * @link https://www.w3.org/TR/webdriver/#dfn-get-element-text
      *
-     * @param ElementId $titleElementId
+     * @param ElementId $elementId
      * @return string
      */
-    public function getElementText(ElementId $titleElementId): string
+    public function getElementText(ElementId $elementId): string
     {
         if (!$this->sessionId) {
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $response = $this->sendGet('/session/' . $this->sessionId . '/element/' . $titleElementId->toString() . '/text');
+        $response = $this->sendGet('/session/' . $this->sessionId . '/element/' . $elementId->toString() . '/text');
 
+        if (!array_key_exists('value', $response) ||
+            !is_string($response['value']))  {
+            throw new InvalidResponseException('response is invalid: ' . var_export($response, true));
+        }
+
+        return $response['value'];
+    }
+
+    /**
+     * @link https://www.w3.org/TR/webdriver/#element-click
+     *
+     * @param ElementId $elementId
+     */
+    public function clickElement(ElementId $elementId): void
+    {
+        if (!$this->sessionId) {
+            throw new LogicException('you need to start a session by openBrowser()');
+        }
+
+        $this->sendPost('/session/' . $this->sessionId . '/element/' . $elementId->toString() . '/click', []);
+    }
+
+    /**
+     * @link https://www.w3.org/TR/webdriver/#get-current-url
+     *
+     * @return string current URL
+     */
+    public function getCurrentUrl(): string
+    {
+        if (!$this->sessionId) {
+            throw new LogicException('you need to start a session by openBrowser()');
+        }
+
+        $response = $this->sendGet('/session/' . $this->sessionId . '/url');
         if (!array_key_exists('value', $response) ||
             !is_string($response['value']))  {
             throw new InvalidResponseException('response is invalid: ' . var_export($response, true));
@@ -209,7 +243,14 @@ final class Webdriver
 
             // For POST request
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-            $encodedBody = json_encode($body);
+            if ($body === []) {
+                // When a request body is empty array, we should encode to JSON object, not array.
+                // If we request empty array to webdriver remote end, we'll got the following error (e.g. click element)
+                // >  '{"value":{"error":"invalid argument","message":"invalid argument: missing command parameters"...
+                $encodedBody = json_encode($body, JSON_FORCE_OBJECT);
+            } else {
+                $encodedBody = json_encode($body);
+            }
             if (!$encodedBody) {
                 throw new InvalidArgumentException('invalid body: ' . var_export($body, true));
             }
