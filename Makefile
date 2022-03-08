@@ -8,3 +8,4 @@ run-tests: ## Run tests
 
 set-local: ## Build docker image to setup your local docker environment
 	docker-compose build
+	docker-compose run phpwd composer install

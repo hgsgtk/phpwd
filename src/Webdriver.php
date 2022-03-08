@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phpwd;
 
+use GuzzleHttp\Exception\TransferException;
 use Phpwd\Exceptions\BadMethodCallException;
 use Phpwd\Exceptions\HttpException;
 use Phpwd\Exceptions\InvalidArgumentException;
@@ -15,11 +16,11 @@ use Phpwd\Exceptions\LogicException;
  */
 final class Webdriver
 {
-    /**
-     * @var string WebDriver remote end url
-     * @link https://w3c.github.io/webdriver/#nodes
-     */
-    private string $remoteEndUrl;
+    private const BASE_HTTP_HEADERS = [
+        'Content-Type' => 'application/json', 
+    ];
+
+    private \GuzzleHttp\ClientInterface $client;
 
     /**
      * @var string|null sessionId
@@ -28,11 +29,16 @@ final class Webdriver
     private string|null $sessionId = null;
 
     /**
-     * @param string|null $remoteEndUrl
+     * @param string|null $remoteEndUrl WebDriver remote end url
+     * @link https://w3c.github.io/webdriver/#nodes
      */
     public function __construct(?string $remoteEndUrl = null)
     {
         $this->remoteEndUrl = $remoteEndUrl ?? 'http://localhost:9515';
+
+        $this->client = new \GuzzleHttp\Client([
+            'timeout' => 5.0,
+        ]);
     }
 
     public function openBrowser()
@@ -99,7 +105,7 @@ final class Webdriver
         }
 
         $response = $this->sendPost('/session/' . $this->sessionId . '/element', [
-            'using' => $locatorStrategy->toString(),
+            'using' => $locatorStrategy,
             'value' => $value,
         ]);
 
@@ -188,37 +194,20 @@ final class Webdriver
     private function sendGet(string $path): array
     {
         try {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $this->remoteEndUrl . $path);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json'
+            $response = $this->client->request('GET', $this->remoteEndUrl . $path, [
+                'headers' => self::BASE_HTTP_HEADERS,
             ]);
-
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-
-            $response = curl_exec($ch);
-
-            if (!is_string($response) || curl_errno($ch)) {
-                throw new HttpException('cURL request error: ' . curl_error($ch));
-            }
-
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode !== 200) {
-                throw new HttpException(
-                    "response code is expected 200, but got status code '{$httpCode}' and response '{$response}'");
-            }
-
-            $decodedBody = json_decode($response, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-            }
-
-            return $decodedBody;
-        } finally {
-            curl_close($ch);
+        } catch (TransferException $e) {
+            throw new HttpException("http client error", $e->getCode(), $e);
         }
+
+        $decodedBody = json_decode((string)$response->getBody(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
+        }
+
+        return $decodedBody;
+
     }
 
     /**
@@ -232,51 +221,34 @@ final class Webdriver
      */
     private function sendPost(string $path, array $body): array
     {
-        try {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $this->remoteEndUrl . $path);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json'
-            ]);
-
-            // For POST request
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-            if ($body === []) {
-                // When a request body is empty array, we should encode to JSON object, not array.
-                // If we request empty array to webdriver remote end, we'll got the following error (e.g. click element)
-                // >  '{"value":{"error":"invalid argument","message":"invalid argument: missing command parameters"...
-                $encodedBody = json_encode($body, JSON_FORCE_OBJECT);
-            } else {
-                $encodedBody = json_encode($body);
-            }
-            if (!$encodedBody) {
-                throw new InvalidArgumentException('invalid body: ' . var_export($body, true));
-            }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedBody);
-
-            $response = curl_exec($ch);
-
-            if (!is_string($response) || curl_errno($ch)) {
-                throw new HttpException('cURL request error: ' . curl_error($ch));
-            }
-
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode !== 200) {
-                throw new HttpException(
-                    "response code is expected 200, but got status code '{$httpCode}' and response '{$response}'");
-            }
-
-            $decodedBody = json_decode($response, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-            }
-
-            return $decodedBody;
-        } finally {
-            curl_close($ch);
+        if ($body === []) {
+            // When a request body is empty array, we should encode to JSON object, not array.
+            // If we request empty array to webdriver remote end, we'll got the following error (e.g. click element)
+            // >  '{"value":{"error":"invalid argument","message":"invalid argument: missing command parameters"...
+            $encodedBody = json_encode($body, JSON_FORCE_OBJECT);
+        } else {
+            $encodedBody = json_encode($body);
         }
+        if (!$encodedBody) {
+            throw new InvalidArgumentException('invalid body: ' . var_export($body, true));
+        }
+        
+        try {
+            $response = $this->client->request('POST', $this->remoteEndUrl . $path, [
+                'headers' => self::BASE_HTTP_HEADERS,
+                'body' => $encodedBody,
+            ]);
+        } catch (TransferException $e) {
+            throw new HttpException("http client error", $e->getCode(), $e);
+        }
+
+        $decodedBody = json_decode((string)$response->getBody(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
+        }
+
+        return $decodedBody;
+
     }
 
     /**
@@ -289,37 +261,17 @@ final class Webdriver
     private function sendDelete(string $path): array
     {
         try {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $this->remoteEndUrl . $path);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json'
+            $response = $this->client->request('DELETE', $this->remoteEndUrl . $path, [
+                'headers' => self::BASE_HTTP_HEADERS,
             ]);
-
-            // For DELETE request
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-
-            $response = curl_exec($ch);
-
-            if (!is_string($response) || curl_errno($ch)) {
-                throw new HttpException('cURL request error: ' . curl_error($ch));
-            }
-
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode !== 200) {
-                throw new HttpException(
-                    "response code is expected 200, but got status code '{$httpCode}' and response '{$response}'");
-            }
-
-            $decodedBody = json_decode($response, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-            }
-
-            return $decodedBody;
-        } finally {
-            curl_close($ch);
+        } catch (TransferException $e) {
+            throw new HttpException("http client error", $e->getCode(), $e);
         }
+        $decodedBody = json_decode((string)$response->getBody(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
+        }
+
+        return $decodedBody;
     }
 }
