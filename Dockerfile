@@ -1,5 +1,5 @@
 # Dockerfile to prepare a local PHP code execution environment.
-FROM php:8.0
+FROM php:8.1
 
 WORKDIR /tmp
 
