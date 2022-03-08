@@ -18,7 +18,8 @@
     "require": {
         "php": ">=8.0",
         "ext-curl": "*",
-        "ext-zip": "*"
+        "ext-zip": "*",
+        "guzzlehttp/guzzle": "^7.4"
     },
     "autoload": {
         "psr-4": {
