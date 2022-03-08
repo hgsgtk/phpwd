@@ -99,7 +99,7 @@ final class Webdriver
         }
 
         $response = $this->sendPost('/session/' . $this->sessionId . '/element', [
-            'using' => $locatorStrategy->toString(),
+            'using' => $locatorStrategy,
             'value' => $value,
         ]);
 
