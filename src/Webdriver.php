@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Phpwd;
 
+use GuzzleHttp\Exception\ClientException;
 use Phpwd\Exceptions\BadMethodCallException;
 use Phpwd\Exceptions\HttpException;
 use Phpwd\Exceptions\InvalidArgumentException;
@@ -188,37 +189,27 @@ final class Webdriver
     private function sendGet(string $path): array
     {
         try {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $this->remoteEndUrl . $path);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json'
+            $client = new \GuzzleHttp\Client([
+                'base_uri' => $this->remoteEndUrl,
+                'timeout' => 5.0,
             ]);
 
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-
-            $response = curl_exec($ch);
-
-            if (!is_string($response) || curl_errno($ch)) {
-                throw new HttpException('cURL request error: ' . curl_error($ch));
-            }
-
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode !== 200) {
-                throw new HttpException(
-                    "response code is expected 200, but got status code '{$httpCode}' and response '{$response}'");
-            }
-
-            $decodedBody = json_decode($response, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-            }
-
-            return $decodedBody;
-        } finally {
-            curl_close($ch);
+            $response = $client->request('GET', $path, [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+            ]);
+        } catch (ClientException $e) {
+            throw new HttpException("http client error", $e->getCode(), $e);
         }
+
+        $decodedBody = json_decode((string)$response->getBody(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
+        }
+
+        return $decodedBody;
+
     }
 
     /**
@@ -232,51 +223,43 @@ final class Webdriver
      */
     private function sendPost(string $path, array $body): array
     {
+        if ($body === []) {
+            // When a request body is empty array, we should encode to JSON object, not array.
+            // If we request empty array to webdriver remote end, we'll got the following error (e.g. click element)
+            // >  '{"value":{"error":"invalid argument","message":"invalid argument: missing command parameters"...
+            $encodedBody = json_encode($body, JSON_FORCE_OBJECT);
+        } else {
+            $encodedBody = json_encode($body);
+        }
+        if (!$encodedBody) {
+            throw new InvalidArgumentException('invalid body: ' . var_export($body, true));
+        }
+        
         try {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, $this->remoteEndUrl . $path);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json'
+            $client = new \GuzzleHttp\Client([
+                'base_uri' => $this->remoteEndUrl,
+                'timeout' => 5.0,
             ]);
 
-            // For POST request
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-            if ($body === []) {
-                // When a request body is empty array, we should encode to JSON object, not array.
-                // If we request empty array to webdriver remote end, we'll got the following error (e.g. click element)
-                // >  '{"value":{"error":"invalid argument","message":"invalid argument: missing command parameters"...
-                $encodedBody = json_encode($body, JSON_FORCE_OBJECT);
-            } else {
-                $encodedBody = json_encode($body);
-            }
-            if (!$encodedBody) {
-                throw new InvalidArgumentException('invalid body: ' . var_export($body, true));
-            }
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedBody);
+            $response = $client->request('POST', $this->remoteEndUrl . $path, [
+                'headers' => [
+                    'Content-Type' => 'application/json', 
+                ],
+                'body' => $encodedBody,
+            ]);
 
-            $response = curl_exec($ch);
 
-            if (!is_string($response) || curl_errno($ch)) {
-                throw new HttpException('cURL request error: ' . curl_error($ch));
-            }
-
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode !== 200) {
-                throw new HttpException(
-                    "response code is expected 200, but got status code '{$httpCode}' and response '{$response}'");
-            }
-
-            $decodedBody = json_decode($response, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-            }
-
-            return $decodedBody;
-        } finally {
-            curl_close($ch);
+        } catch (ClientException $e) {
+            throw new HttpException("http client error", $e->getCode(), $e);
         }
+
+        $decodedBody = json_decode((string)$response->getBody(), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
+        }
+
+        return $decodedBody;
+
     }
 
     /**
