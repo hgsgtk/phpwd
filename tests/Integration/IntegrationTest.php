@@ -23,30 +23,30 @@ final class IntegrationTest extends TestCase
             sleep(1); // To demonstration
 
             // Find the text of title
-            $titleElementId = $browser->findElement(LocatorStrategy::TagName, 'h1');
-            $titleText = $browser->getElementText($titleElementId);
+            $titleElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
+            $titleText = $titleElement->getText();
             $this->assertSame('Example Domain', $titleText);
 
             // Click the link
-            $linkElementId = $browser->findElement(LocatorStrategy::LinkText, 'More information...');
-            $browser->clickElement($linkElementId);
+            $linkElement = $browser->findElement(LocatorStrategy::LinkText, 'More information...');
+            $linkElement->click();
             sleep(1); // To demonstration
 
             // Confirm to move IANA
-            $titleElementId = $browser->findElement(LocatorStrategy::TagName, 'h1');
-            $titleText = $browser->getElementText($titleElementId);
+            $titleElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
+            $titleText = $titleElement->getText();
             $this->assertSame('IANA-managed Reserved Domains', $titleText);
 
             // Move to RFC 2606
-            $linkElementId = $browser->findElement(LocatorStrategy::Css, '[href="/go/rfc2606"]');
-            $browser->clickElement($linkElementId);
+            $linkElement = $browser->findElement(LocatorStrategy::Css, '[href="/go/rfc2606"]');
+            $linkElement->click();
             sleep(1); // To demonstration
 
             $url = $browser->getCurrentUrl();
             $this->assertSame('https://www.rfc-editor.org/rfc/rfc2606.html', $url);
 
         } finally {
-            $browser->closeBrowser();
+            $browser->close();
         }
     }
 
@@ -63,8 +63,8 @@ final class IntegrationTest extends TestCase
             $browser2 = $driver->openBrowser();
 
         } finally {
-            $browser1->closeBrowser();
-            $browser2->closeBrowser();
+            $browser1->close();
+            $browser2->close();
         }
     }
 }
