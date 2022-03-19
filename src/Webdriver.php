@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Phpwd;
 
-use GuzzleHttp\Exception\TransferException;
 use Phpwd\Exceptions\BadMethodCallException;
-use Phpwd\Exceptions\HttpException;
-use Phpwd\Exceptions\InvalidArgumentException;
 use Phpwd\Exceptions\InvalidResponseException;
 use Phpwd\Exceptions\LogicException;
 
@@ -16,17 +13,13 @@ use Phpwd\Exceptions\LogicException;
  */
 final class Webdriver
 {
-    private const BASE_HTTP_HEADERS = [
-        'Content-Type' => 'application/json', 
-    ];
-
-    private \GuzzleHttp\ClientInterface $client;
-
     /**
      * @var string|null sessionId
      * @link https://www.w3.org/TR/webdriver/#new-session
      */
     private string|null $sessionId = null;
+
+    private ClientInterface $client;
 
     /**
      * @param string|null $remoteEndUrl WebDriver remote end url
@@ -34,11 +27,9 @@ final class Webdriver
      */
     public function __construct(?string $remoteEndUrl = null)
     {
-        $this->remoteEndUrl = $remoteEndUrl ?? 'http://localhost:9515';
+        $remoteEndUrl = $remoteEndUrl ?? 'http://localhost:9515';
 
-        $this->client = new \GuzzleHttp\Client([
-            'timeout' => 5.0,
-        ]);
+        $this->client = new HttpClient($remoteEndUrl);
     }
 
     public function openBrowser()
@@ -51,7 +42,7 @@ final class Webdriver
         // To support another drivers, we should prepare option for capabilities setting.
         // It may be better to create Option class which defined the default option.
         // TODO: support Selenium server.
-        $response = $this->sendPost('/session', [
+        $response = $this->client->post('/session', [
             'capabilities' => [
                 'alwaysMatch' => [
                     'goog:chromeOptions' => [
@@ -77,7 +68,7 @@ final class Webdriver
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $this->sendDelete('/session/' . $this->sessionId);
+        $this->client->delete('/session/' . $this->sessionId);
     }
 
     public function navigateTo(string $url): void
@@ -86,7 +77,7 @@ final class Webdriver
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $this->sendPost('/session/' . $this->sessionId . '/url', [
+        $this->client->post('/session/' . $this->sessionId . '/url', [
             'url' => $url
         ]);
     }
@@ -104,7 +95,7 @@ final class Webdriver
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $response = $this->sendPost('/session/' . $this->sessionId . '/element', [
+        $response = $this->client->post('/session/' . $this->sessionId . '/element', [
             'using' => $locatorStrategy,
             'value' => $value,
         ]);
@@ -138,7 +129,7 @@ final class Webdriver
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $response = $this->sendGet('/session/' . $this->sessionId . '/element/' . $elementId->toString() . '/text');
+        $response = $this->client->get('/session/' . $this->sessionId . '/element/' . $elementId->toString() . '/text');
 
         if (!array_key_exists('value', $response) ||
             !is_string($response['value']))  {
@@ -159,7 +150,7 @@ final class Webdriver
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $this->sendPost('/session/' . $this->sessionId . '/element/' . $elementId->toString() . '/click', []);
+        $this->client->post('/session/' . $this->sessionId . '/element/' . $elementId->toString() . '/click', []);
     }
 
     /**
@@ -173,105 +164,12 @@ final class Webdriver
             throw new LogicException('you need to start a session by openBrowser()');
         }
 
-        $response = $this->sendGet('/session/' . $this->sessionId . '/url');
+        $response = $this->client->get('/session/' . $this->sessionId . '/url');
         if (!array_key_exists('value', $response) ||
             !is_string($response['value']))  {
             throw new InvalidResponseException('response is invalid: ' . var_export($response, true));
         }
 
         return $response['value'];
-    }
-
-    /**
-     * send GET request.
-     *
-     * @todo extract duplicate codes about curl handling.
-     * @todo move another class which is responsive for http client
-     *
-     * @param string $path
-     * @return array<string,mixed>
-     */
-    private function sendGet(string $path): array
-    {
-        try {
-            $response = $this->client->request('GET', $this->remoteEndUrl . $path, [
-                'headers' => self::BASE_HTTP_HEADERS,
-            ]);
-        } catch (TransferException $e) {
-            throw new HttpException("http client error", $e->getCode(), $e);
-        }
-
-        $decodedBody = json_decode((string)$response->getBody(), true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-        }
-
-        return $decodedBody;
-
-    }
-
-    /**
-     * send POST request.
-     *
-     * @todo extract duplicate codes about curl handling.
-     *
-     * @param string $path
-     * @param array $body
-     * @return array<string,mixed>
-     */
-    private function sendPost(string $path, array $body): array
-    {
-        if ($body === []) {
-            // When a request body is empty array, we should encode to JSON object, not array.
-            // If we request empty array to webdriver remote end, we'll got the following error (e.g. click element)
-            // >  '{"value":{"error":"invalid argument","message":"invalid argument: missing command parameters"...
-            $encodedBody = json_encode($body, JSON_FORCE_OBJECT);
-        } else {
-            $encodedBody = json_encode($body);
-        }
-        if (!$encodedBody) {
-            throw new InvalidArgumentException('invalid body: ' . var_export($body, true));
-        }
-        
-        try {
-            $response = $this->client->request('POST', $this->remoteEndUrl . $path, [
-                'headers' => self::BASE_HTTP_HEADERS,
-                'body' => $encodedBody,
-            ]);
-        } catch (TransferException $e) {
-            throw new HttpException("http client error", $e->getCode(), $e);
-        }
-
-        $decodedBody = json_decode((string)$response->getBody(), true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-        }
-
-        return $decodedBody;
-
-    }
-
-    /**
-     * send DELETE request.
-     *
-     * @todo extract duplicate codes about curl handling.
-     *
-     * @return array<string,mixed>
-     */
-    private function sendDelete(string $path): array
-    {
-        try {
-            $response = $this->client->request('DELETE', $this->remoteEndUrl . $path, [
-                'headers' => self::BASE_HTTP_HEADERS,
-            ]);
-        } catch (TransferException $e) {
-            throw new HttpException("http client error", $e->getCode(), $e);
-        }
-        $decodedBody = json_decode((string)$response->getBody(), true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidResponseException("JSON decode error: " . json_last_error_msg());
-        }
-
-        return $decodedBody;
     }
 }
