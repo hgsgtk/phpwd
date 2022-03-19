@@ -28,30 +28,33 @@ $driver = new Webdriver();
 
 try {
     // Open browser by webdriver(especially chromedriver)
-    $driver->openBrowser();
+    $browser = $driver->openBrowser();
 
     // Go to example.com
-    $driver->navigateTo('https://example.com/');
+    $browser->navigateTo('https://example.com/');
+    sleep(1); // To demonstration
 
     // Find the text of title
-    $titleElementId = $driver->findElement(LocatorStrategy::tagName(), 'h1');
-    $titleText = $driver->getElementText($titleElementId);
+    $titleElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
+    $titleText = $titleElement->getText();
     $this->assertSame('Example Domain', $titleText);
 
     // Click the link
-    $linkElementId = $driver->findElement(LocatorStrategy::linkText(), 'More information...');
-    $driver->clickElement($linkElementId);
+    $linkElement = $browser->findElement(LocatorStrategy::LinkText, 'More information...');
+    $linkElement->click();
+    sleep(1); // To demonstration
 
     // Confirm to move IANA
-    $titleElementId = $driver->findElement(LocatorStrategy::tagName(), 'h1');
-    $titleText = $driver->getElementText($titleElementId);
+    $titleElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
+    $titleText = $titleElement->getText();
     $this->assertSame('IANA-managed Reserved Domains', $titleText);
 
     // Move to RFC 2606
-    $linkElementId = $driver->findElement(LocatorStrategy::css(), '[href="/go/rfc2606"]');
-    $driver->clickElement($linkElementId);
+    $linkElement = $browser->findElement(LocatorStrategy::Css, '[href="/go/rfc2606"]');
+    $linkElement->click();
+    sleep(1); // To demonstration
 
-    $url = $driver->getCurrentUrl();
+    $url = $browser->getCurrentUrl();
     $this->assertSame('https://www.rfc-editor.org/rfc/rfc2606.html', $url);
 
 } finally {
