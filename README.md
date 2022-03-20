@@ -12,7 +12,7 @@ The phpwd library is Selenium WebDriver client in PHP.
 
 You can install via composer.
 
-```
+```bash
 composer require hgsgtk/phpwd
 ```
 
@@ -67,7 +67,7 @@ try {
 To control a browser, you need to start a remote end (server), which will listen to the commands sent from this library.
 By using the included docker-compose.yml, chrome driver can be used immediately.
 
-```
+```bash
 make set-local
 ```
 
@@ -75,6 +75,6 @@ make set-local
 
 You can run tests by using Docker environment.
 
-```
+```bash
 make run-tests
 ```
