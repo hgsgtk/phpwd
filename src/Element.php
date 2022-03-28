@@ -46,4 +46,15 @@ final class Element
         $this->client->post('/session/' . $this->sessionId->toString() .
          '/element/' . $this->elementId->toString() . '/click', []);
     }
+
+    /**
+     * @link https://www.w3.org/TR/webdriver/#element-send-keys
+     */
+    public function type(string $input): void
+    {
+        $this->client->post('/session/' . $this->sessionId->toString() .
+        '/element/' . $this->elementId->toString() . '/value', [
+            'text' => 'Autify',
+        ]);
+    }
 }

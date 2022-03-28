@@ -83,6 +83,11 @@ final class IntegrationTest extends TestCase
 
             sleep(1); // To demonstration
 
+            // Fill the company name
+            $companyForm = $browser->findElement(LocatorStrategy::Css, '#mce-COMPANY');
+            $companyForm->type('Autify');
+            sleep(1); // To demonstration
+
         } finally {
             $browser->close();
         }
