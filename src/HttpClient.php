@@ -9,7 +9,7 @@ use Phpwd\Exceptions\HttpException;
 use Phpwd\Exceptions\InvalidArgumentException;
 use Phpwd\Exceptions\InvalidResponseException;
 
-final class HttpClient implements ClientInterface
+final class HttpClient
 {   
     private const BASE_HTTP_HEADERS = [
         'Content-Type' => 'application/json', 

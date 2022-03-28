@@ -8,7 +8,7 @@ use Phpwd\Exceptions\InvalidResponseException;
 
 final class Browser
 {
-    private ClientInterface $client;
+    private HttpClient $client;
 
     public function __construct(
         private SessionId $sessionId,
@@ -27,7 +27,8 @@ final class Browser
 
     public function navigateTo(string $url): void
     {
-        $this->client->post('/session/' . $this->sessionId->toString() . '/url', [
+        $remoteUrlPath = "/session/{$this->sessionId->toString()}/url";
+        $this->client->post($remoteUrlPath, [
             'url' => $url
         ]);
     }
