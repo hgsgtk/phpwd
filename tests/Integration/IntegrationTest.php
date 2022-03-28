@@ -23,8 +23,8 @@ final class IntegrationTest extends TestCase
             sleep(1); // To demonstration
 
             // Find the text of title
-            $titleElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
-            $titleText = $titleElement->getText();
+            $linkElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
+            $titleText = $linkElement->getText();
             $this->assertSame('Example Domain', $titleText);
 
             // Click the link
@@ -33,8 +33,8 @@ final class IntegrationTest extends TestCase
             sleep(1); // To demonstration
 
             // Confirm to move IANA
-            $titleElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
-            $titleText = $titleElement->getText();
+            $linkElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
+            $titleText = $linkElement->getText();
             $this->assertSame('IANA-managed Reserved Domains', $titleText);
 
             // Move to RFC 2606
@@ -44,6 +44,35 @@ final class IntegrationTest extends TestCase
 
             $url = $browser->getCurrentUrl();
             $this->assertSame('https://www.rfc-editor.org/rfc/rfc2606.html', $url);
+
+        } finally {
+            $browser->close();
+        }
+    }
+
+    public function testGoToAutifyCom(): void
+    {
+        $driver = new Webdriver();
+
+        try {
+            // Open browser by webdriver(especially chromedriver)
+            $browser = $driver->openBrowser();
+
+            // Go to example.com
+            $browser->navigateTo('https://autify.com/');
+            sleep(1); // To demonstration
+
+            // Find the text of link
+            $linkElement = $browser->findElement(LocatorStrategy::LinkText, 'Why Autify');
+            $titleText = $linkElement->getText();
+            $this->assertSame('Why Autify', $titleText);
+
+            // Click
+            $linkElement->click();
+            sleep(1); // To demonstration
+
+            $url = $browser->getCurrentUrl();
+            $this->assertSame('https://autify.com/why-autify', $url);
 
         } finally {
             $browser->close();
