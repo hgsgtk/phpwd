@@ -11,7 +11,7 @@ use Phpwd\Exceptions\InvalidResponseException;
  */
 final class Webdriver
 {
-    private ClientInterface $client;
+    private HttpClient $client;
 
     /**
      * @param string|null $remoteEndUrl WebDriver remote end url

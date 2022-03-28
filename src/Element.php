@@ -8,7 +8,7 @@ use Phpwd\Exceptions\InvalidResponseException;
 
 final class Element
 {
-    private ClientInterface $client;
+    private HttpClient $client;
 
     public function __construct(
         private SessionId $sessionId,
