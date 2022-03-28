@@ -83,10 +83,19 @@ final class IntegrationTest extends TestCase
 
             sleep(1); // To demonstration
 
-            // Fill the company name
+            // Fill an applicant information
+            $firstName = $browser->findElement(LocatorStrategy::Css, '#mce-FNAME');
+            $firstName->type('James');
+
+            $lastName = $browser->findElement(LocatorStrategy::Css, '#mce-LNAME');
+            $lastName->type('William');
+
+            $email = $browser->findElement(LocatorStrategy::Css, '#mce-EMAIL');
+            $email->type('xxxxx@xxxxx.com');
+
             $companyForm = $browser->findElement(LocatorStrategy::Css, '#mce-COMPANY');
             $companyForm->type('Autify');
-            sleep(1); // To demonstration
+            sleep(2); // To demonstration
 
         } finally {
             $browser->close();

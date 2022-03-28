@@ -54,7 +54,7 @@ final class Element
     {
         $this->client->post('/session/' . $this->sessionId->toString() .
         '/element/' . $this->elementId->toString() . '/value', [
-            'text' => 'Autify',
+            'text' => $input,
         ]);
     }
 }
