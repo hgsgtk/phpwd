@@ -69,10 +69,19 @@ final class IntegrationTest extends TestCase
 
             // Click
             $linkElement->click();
+            // Verify if we are in the page why autify
+            $this->assertSame('https://autify.com/why-autify', $browser->getCurrentUrl());
+
             sleep(1); // To demonstration
 
-            $url = $browser->getCurrentUrl();
-            $this->assertSame('https://autify.com/why-autify', $url);
+            $successStories = $browser->findElement(LocatorStrategy::Css, '.container > h3');
+            $this->assertSame('Success Stories', $successStories->getText());
+
+            // Go back to the top page
+            $browser->back();
+            $this->assertSame('https://autify.com/', $browser->getCurrentUrl());
+
+            sleep(1); // To demonstration
 
         } finally {
             $browser->close();

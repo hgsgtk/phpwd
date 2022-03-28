@@ -62,7 +62,6 @@ final class Browser
         );
     }
 
-
     /**
      * @link https://www.w3.org/TR/webdriver/#get-current-url
      *
@@ -77,5 +76,15 @@ final class Browser
         }
 
         return $response['value'];
+    }
+
+    /**
+     * Go back to the previous page
+     * 
+     * @link https://www.w3.org/TR/webdriver/#back
+     */
+    public function back(): void
+    {
+        $this->client->post('/session/' . $this->sessionId->toString() . '/back', []);
     }
 }
