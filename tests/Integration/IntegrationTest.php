@@ -23,23 +23,23 @@ final class IntegrationTest extends TestCase
             sleep(1); // To demonstration
 
             // Find the text of title
-            $linkElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
-            $titleText = $linkElement->getText();
+            $whyAutify = $browser->findElement(LocatorStrategy::TagName, 'h1');
+            $titleText = $whyAutify->getText();
             $this->assertSame('Example Domain', $titleText);
 
             // Click the link
-            $linkElement = $browser->findElement(LocatorStrategy::LinkText, 'More information...');
-            $linkElement->click();
+            $whyAutify = $browser->findElement(LocatorStrategy::LinkText, 'More information...');
+            $whyAutify->click();
             sleep(1); // To demonstration
 
             // Confirm to move IANA
-            $linkElement = $browser->findElement(LocatorStrategy::TagName, 'h1');
-            $titleText = $linkElement->getText();
+            $whyAutify = $browser->findElement(LocatorStrategy::TagName, 'h1');
+            $titleText = $whyAutify->getText();
             $this->assertSame('IANA-managed Reserved Domains', $titleText);
 
             // Move to RFC 2606
-            $linkElement = $browser->findElement(LocatorStrategy::Css, '[href="/go/rfc2606"]');
-            $linkElement->click();
+            $whyAutify = $browser->findElement(LocatorStrategy::Css, '[href="/go/rfc2606"]');
+            $whyAutify->click();
             sleep(1); // To demonstration
 
             $url = $browser->getCurrentUrl();
@@ -63,12 +63,12 @@ final class IntegrationTest extends TestCase
             sleep(1); // To demonstration
 
             // Find the text of link
-            $linkElement = $browser->findElement(LocatorStrategy::LinkText, 'Why Autify');
-            $titleText = $linkElement->getText();
+            $whyAutify = $browser->findElement(LocatorStrategy::PartialLinkText, 'Why Auti');
+            $titleText = $whyAutify->getText();
             $this->assertSame('Why Autify', $titleText);
 
             // Click
-            $linkElement->click();
+            $whyAutify->click();
             // Verify if we are in the page why autify
             $this->assertSame('https://autify.com/why-autify', $browser->getCurrentUrl());
 
